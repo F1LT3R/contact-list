@@ -13,10 +13,10 @@ const { createStore } = Redux;
 const initialState = {
   contacts: [
     {
-      firstName: 'Amanda',
+      firstName: 'Alistair',
       lastName: 'MacDonald',
       phone: '888-888-8888',
-      email: 'amandaweyers@gmail.com',
+      email: 'nope@nope.com',
       id: '0'
     }
   ],
