@@ -1,5 +1,5 @@
 // define('todo-list', {});
-import * as actions from './actionTypes';
+import * as actions from './actionTypes.js';
 
 const genId = () =>
   Array(16)
