@@ -1,0 +1,9 @@
+export const CREATE_NEW_CONTACT = 'CREATE_NEW_CONTACT';
+export const SET_FIRSTNAME = 'SET_FIRSTNAME';
+export const SET_LASTNAME = 'SET_LASTNAME';
+export const SET_PHONE = 'SET_PHONE';
+export const SET_EMAIL = 'SET_EMAIL';
+export const SAVE_CONTACT = 'SAVE_CONTACT';
+export const SELECT_CONTACT = 'SELECT_CONTACT';
+export const CANCEL_EDIT = 'CANCEL_EDIT';
+export const DELETE_CONTACT = 'DELETE_CONTACT';

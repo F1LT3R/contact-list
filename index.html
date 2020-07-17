@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<head>
+  <!-- <script src="/vendor/redux/redux.min.js"></script> -->
+  <script src="https://unpkg.com/redux@4.0.5/dist/redux.min.js"></script>
+  <script src="./contact-list.mjs" type="module"></script>
+</head>
+<body>
+  <contact-list></contact-list>
+</body>
+
+<script type="module">
+  import store from './store';
+
+  store.dispatch({ type: 'CREATE_NEW_CONTACT' });
+  store.dispatch({ type: 'SET_FIRSTNAME', value: 'Bilbo' });
+  store.dispatch({ type: 'SET_LASTNAME', value: 'Baggins' });
+  store.dispatch({ type: 'CANCEL_EDIT' });
+  store.dispatch({ type: 'CREATE_NEW_CONTACT' });
+  store.dispatch({ type: 'SET_FIRSTNAME', value: 'Thomas' });
+  store.dispatch({ type: 'SET_LASTNAME', value: 'Anderson' });
+  store.dispatch({ type: 'SET_EMAIL', value: 'neo@nowhere.net' });
+  store.dispatch({ type: 'SET_PHONE', value: '123-456-7890' });
+  store.dispatch({ type: 'SAVE_CONTACT' });
+  store.dispatch({ type: 'CREATE_NEW_CONTACT' });
+  store.dispatch({ type: 'SET_FIRSTNAME', value: 'Naomi' });
+  store.dispatch({ type: 'SET_LASTNAME', value: 'Fomo' });
+  store.dispatch({ type: 'SET_EMAIL', value: 'naofo@gmail.com' });
+  store.dispatch({ type: 'SET_PHONE', value: '234-567-8901' });
+  store.dispatch({ type: 'SAVE_CONTACT' });
+  store.dispatch({ type: 'SELECT_CONTACT', index: 2 });
+  store.dispatch({ type: 'DELETE_CONTACT', index: 2 });
+  store.dispatch({ type: 'CANCEL_EDIT' });
+</script>
