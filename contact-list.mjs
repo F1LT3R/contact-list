@@ -93,13 +93,17 @@ class ContactList extends HTMLElement {
         margin: 16px 0;
       }
 
-      .edit-user label {
+      .edit-contact {
+        display: none
+      }
+
+      .edit-contact label {
         font-size: 14px; 
         margin: 2px 0;
         display:block;
       }
 
-      .edit-user input {
+      .edit-contact input {
         font-size: 18px;
         margin: 2px 0 12px 0;
         display:block;
@@ -160,70 +164,6 @@ class ContactList extends HTMLElement {
     `;
   }
 
-  renderContacts(contacts) {
-    return contacts
-      .map((contact) => {
-        return /*html*/ `<div class="contact">
-          <div class="name">${contact.firstName} ${contact.lastName}</div>
-          <div class="last-phone">
-            <a href="tel:${contact.phone}">${contact.phone}</a>
-          </div>
-          <div class="last-email"><a href="mailto:${contact.email}">${contact.email}</a></div>
-          <div class="actions">
-            <button class="delete">Delete</button>
-          </div>
-    </div>`;
-      })
-      .join('');
-  }
-
-  form() {
-    return /*html*/ `
-      <form class="edit-user" action="none">
-        <label for="firstName">First Name </label>
-        <input name="firstName" />
-
-        <label for="lastName">Last Name</label>
-        <input name="lastName" />
-
-        <label for="email">Email</label>
-        <input name="email" type="email" />
-
-        <label for="phone">Phone</label>
-        <input name="phone" type="phone" />
-
-        <div class="controls">
-          <button class="cancel">Cancel</button>
-          <button class="save">Save</button>
-        </div>
-      </form>
-    `;
-  }
-
-  template({ contacts, count, selectedContact }) {
-    return /*html*/ `
-      <style>${this.style()}</style>
-
-      <h1>Contact List</h1>
-      
-      <div class="controls">
-        <button class="new">New Contact</button>
-      </div>
-
-      <div class="selected-contact">${this.form()}</div>
-
-      <div class="contacts">
-        ${contacts.length ? this.renderContacts(contacts) : ''}
-      </div>      
-
-      <div class="count">Total: ${count}</div>
-    `;
-  }
-
-  updateCount(count) {
-    this.$count.innerHTML = `Total contacts: ${count}`;
-  }
-
   deleteContact(event, index) {
     event.stopPropagation();
     store.dispatch({ type: actions.DELETE_CONTACT, index });
@@ -234,11 +174,7 @@ class ContactList extends HTMLElement {
     store.dispatch({ type: actions.SELECT_CONTACT, index });
   }
 
-  removeOldContactEventListeners() {
-    if (!Reflect.has(this, '$deleteButtons') || !this.$deleteButtons.length) {
-      return;
-    }
-
+  removeContactEvents() {
     this.$deleteButtons.forEach((button) => {
       button.removeEventListener('click', (event, index) => {
         this.deleteContact(event, index);
@@ -252,9 +188,10 @@ class ContactList extends HTMLElement {
     });
   }
 
-  updateContacts(contacts) {
-    this.removeOldContactEventListeners();
-    this.$contacts.innerHTML = this.renderContacts(contacts);
+  attachContactEvents() {
+    if (Reflect.has(this, '$deleteButtons')) {
+      this.removeContactEvents();
+    }
 
     this.$deleteButtons = this.shadowRoot.querySelectorAll('button.delete');
     this.$deleteButtons.forEach((button, index) => {
@@ -303,12 +240,12 @@ class ContactList extends HTMLElement {
     store.dispatch({ type: 'CREATE_NEW_CONTACT' });
   }
 
-  updateSelectedContact({ selectedContact }) {
+  renderSelectedContact({ selectedContact }) {
     if (!selectedContact) {
-      this.$selectedContact.style.display = 'none';
+      this.$editContact.style.display = 'none';
       return;
     }
-    this.$selectedContact.style.display = 'block';
+    this.$editContact.style.display = 'block';
 
     this.$firstNameInput.value = selectedContact.firstName;
     this.$lastNameInput.value = selectedContact.lastName;
@@ -316,17 +253,83 @@ class ContactList extends HTMLElement {
     this.$phoneInput.value = selectedContact.phone;
   }
 
-  queryElements(root) {
-    this.$count = root.querySelector('.count');
-    this.$contacts = root.querySelector('.contacts');
-    this.$newContactButton = root.querySelector('button.new');
-    this.$selectedContact = root.querySelector('.selected-contact');
-    this.$firstNameInput = root.querySelector('input[name=firstName]');
-    this.$lastNameInput = root.querySelector('input[name=lastName]');
-    this.$phoneInput = root.querySelector('input[name=phone]');
-    this.$emailInput = root.querySelector('input[name=email]');
-    this.$saveContactButton = root.querySelector('button.save');
-    this.$cancelEditButton = root.querySelector('button.cancel');
+  renderCount({ contacts }) {
+    this.$count.innerHTML = `Total contacts: ${contacts.length}`;
+  }
+
+  renderContacts({ contacts }) {
+    this.$contacts.innerHTML = contacts
+      .map((contact) => {
+        return /*html*/ `<div class="contact">
+            <div class="name">${contact.firstName} ${contact.lastName}</div>
+            <div class="last-phone">
+              <a href="tel:${contact.phone}">${contact.phone}</a>
+            </div>
+            <div class="last-email"><a href="mailto:${contact.email}">${contact.email}</a></div>
+            <div class="actions">
+              <button class="delete">Delete</button>
+            </div>
+          </div>`;
+      })
+      .join('');
+
+    this.attachContactEvents();
+  }
+
+  form() {
+    return /*html*/ `
+      <form class="edit-contact" action="none">
+        <label for="firstName">First Name </label>
+        <input name="firstName" />
+
+        <label for="lastName">Last Name</label>
+        <input name="lastName" />
+
+        <label for="email">Email</label>
+        <input name="email" type="email" />
+
+        <label for="phone">Phone</label>
+        <input name="phone" type="phone" />
+
+        <div class="controls">
+          <button class="cancel">Cancel</button>
+          <button class="save">Save</button>
+        </div>
+      </form>
+    `;
+  }
+
+  renderTemplate({ contacts }) {
+    return /*html*/ `
+      <style>${this.style()}</style>
+
+      <h1>Contact List</h1>
+      
+      <div class="controls">
+        <button class="new">New Contact</button>
+      </div>
+
+      <div class="selected-contact">${this.form()}</div>
+
+      <div class="contacts"></div>
+
+      <div class="count"></div>
+    `;
+  }
+
+  queryElements() {
+    this.$count = this.shadowRoot.querySelector('.count');
+    this.$contacts = this.shadowRoot.querySelector('.contacts');
+    this.$newContactButton = this.shadowRoot.querySelector('button.new');
+    this.$editContact = this.shadowRoot.querySelector('.edit-contact');
+    this.$firstNameInput = this.shadowRoot.querySelector(
+      'input[name=firstName]'
+    );
+    this.$lastNameInput = this.shadowRoot.querySelector('input[name=lastName]');
+    this.$phoneInput = this.shadowRoot.querySelector('input[name=phone]');
+    this.$emailInput = this.shadowRoot.querySelector('input[name=email]');
+    this.$saveContactButton = this.shadowRoot.querySelector('button.save');
+    this.$cancelEditButton = this.shadowRoot.querySelector('button.cancel');
   }
 
   attachEvents(root) {
@@ -336,24 +339,7 @@ class ContactList extends HTMLElement {
     this.$emailInput.addEventListener('change', this.setEmail);
     this.$saveContactButton.addEventListener('click', this.saveContact);
     this.$cancelEditButton.addEventListener('click', this.cancelEdit);
-
     this.$newContactButton.addEventListener('click', this.newContact);
-
-    store.subscribe(() => {
-      const state = store.getState();
-      this.updateCount(state.contacts.length);
-      this.updateSelectedContact(state);
-      this.updateContacts(state.contacts, store);
-    });
-  }
-
-  connectedCallback() {
-    this.attachShadow({ mode: 'open' });
-    const state = store.getState();
-    const root = this.shadowRoot;
-    root.innerHTML = this.template(state);
-    this.queryElements(root);
-    this.attachEvents(root);
   }
 
   disconnectedCallback() {
@@ -365,6 +351,28 @@ class ContactList extends HTMLElement {
     this.$cancelEditButton.removeEventListener('click', this.cancelEdit);
     this.$newContactButton.removeEventListener('click', this.newContact);
     this.removeOldContactEventListeners();
+  }
+
+  render(state) {
+    this.renderCount(state);
+    this.renderContacts(state);
+    this.renderSelectedContact(state);
+  }
+
+  connectedCallback() {
+    this.attachShadow({ mode: 'open' });
+    const initialState = store.getState();
+    this.shadowRoot.innerHTML = this.renderTemplate(initialState);
+    this.queryElements();
+    this.render(initialState);
+    this.attachEvents();
+
+    store.subscribe(() => {
+      const state = store.getState();
+      this.renderCount(state);
+      this.renderContacts(state);
+      this.renderSelectedContact(state);
+    });
   }
 }
 

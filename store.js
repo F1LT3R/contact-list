@@ -17,7 +17,7 @@ const initialState = {
       lastName: 'MacDonald',
       phone: '888-888-8888',
       email: 'nope@nope.com',
-      id: '0'
+      id: genId()
     }
   ],
   selectedContact: null,
@@ -44,7 +44,7 @@ function app(state = initialState, action) {
     case actions.CREATE_NEW_CONTACT:
       return Object.assign({}, state, {
         selectedContact: { ...UserModel() },
-        selectedIndex: state.contacts.length - 1
+        selectedIndex: state.contacts.length
       });
 
     case actions.SET_FIRSTNAME:
@@ -95,15 +95,15 @@ function app(state = initialState, action) {
       if (incomplete.length > 0) {
         throw `You must complete the [${incomplete}] fields before calling SAVE_CONTACT`;
       }
-      const isNew = state.selectedIndex === state.contacts.length - 1;
-      if (!isNew) {
-        state.contacts[state.selectedIndex] = { ...selectedContact };
+      const isNew = typeof state.contacts[state.selectedIndex] !== 'object';
+      let updatedContacts = [...state.contacts];
+      if (isNew) {
+        updatedContacts.push({ ...selectedContact });
+      } else {
+        updatedContacts[state.selectedIndex] = { ...selectedContact };
       }
-      const newContacts = isNew
-        ? [...state.contacts, { ...selectedContact }]
-        : [...state.contacts];
       return Object.assign({}, state, {
-        contacts: [...newContacts],
+        contacts: updatedContacts,
         selectedContact: null,
         selectedIndex: null
       });
@@ -127,12 +127,11 @@ function app(state = initialState, action) {
       });
 
     case actions.DELETE_CONTACT:
-      if (
-        !typeof action.index === 'number' ||
-        action.index < 0 ||
-        action.index >= state.contacts.length
-      ) {
-        throw 'You must select a valid contact index to DELETE_CONTACT';
+      if (typeof action.index !== 'number') {
+        throw 'Contact index for DELETE_CONTACT must be a number';
+      }
+      if (action.index < 0 || action.index >= state.contacts.length) {
+        throw 'Out of range index for DELETE_CONTACT';
       }
       return Object.assign({}, state, {
         contacts: [
