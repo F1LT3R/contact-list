@@ -364,7 +364,7 @@ class ContactList extends HTMLElement {
     this.$saveContactButton.removeEventListener('click', this.saveContact);
     this.$cancelEditButton.removeEventListener('click', this.cancelEdit);
     this.$newContactButton.removeEventListener('click', this.newContact);
-    this.removeContactEventListeners();
+    this.removeOldContactEventListeners();
   }
 }
 
