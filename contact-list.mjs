@@ -1,4 +1,5 @@
 import store from './store.js';
+import * as actions from './actionTypes.js';
 
 class ContactList extends HTMLElement {
   constructor() {
@@ -28,7 +29,7 @@ class ContactList extends HTMLElement {
       form label {
         display:block; 
       }
-
+      
       .contact  {
         border-radius: 4px;
         display: block;
@@ -37,10 +38,12 @@ class ContactList extends HTMLElement {
         background: #EFEFEF;
         cursor: pointer;
       }
+
       .contact:hover {
         background: #08A;
         color: #fff;
       }
+
       .contact:hover a{
         color: #fff;
       }
@@ -66,10 +69,23 @@ class ContactList extends HTMLElement {
         border: none;
       }
 
+      button:hover {
+        background: #09C; 
+      }
+
       button.delete {
+        background: #D20;
+      }
+      
+      button.delete:hover {
         background: #F20;
       }
+
       button.save {
+        background: #180;
+      }
+
+      button.save:hover {
         background: #2A0;
       }
       
@@ -82,12 +98,64 @@ class ContactList extends HTMLElement {
         margin: 2px 0;
         display:block;
       }
+
       .edit-user input {
         font-size: 18px;
         margin: 2px 0 12px 0;
         display:block;
         padding: 8px;
         width: 380px;
+      }
+
+      button {
+        position: relative;
+        top: 0px;
+      }
+
+      button:hover, button:focus {
+        top: -1px;
+        box-shadow: 0px 2px 1px rgba(0, 0, 0, 0.25);
+      }
+
+      button:active {
+        box-shadow: none;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .contact  { 
+          background: #222;
+        }
+
+        .contact a {
+          color: #08A;
+        }
+
+        button {
+          background: #048;
+        }
+
+        button.delete {
+          background: #810;
+        }
+
+        button.save {
+          background: #140;
+        }
+
+        .contact:hover {
+          background: #048;
+          color: #AAA;
+        }
+
+        .contact:hover a{
+          color: #AAA;
+        }
+
+        input {
+          background: #222;
+          border: 1px solid #888;
+          color: #AAA;
+        }
       }
     `;
   }
@@ -109,28 +177,30 @@ class ContactList extends HTMLElement {
       .join('');
   }
 
-  form({ firstName, lastName, email, phone } = {}) {
-    return /*html*/ `<form class="edit-user" action="none">
+  form() {
+    return /*html*/ `
+      <form class="edit-user" action="none">
         <label for="firstName">First Name </label>
-        <input name="firstName" value="${firstName}" />
+        <input name="firstName" />
 
         <label for="lastName">Last Name</label>
-        <input name="lastName" value="${lastName}" />
-        
+        <input name="lastName" />
+
         <label for="email">Email</label>
-        <input name="email" value="${email}" type="email" />
-        
-        <label for="phone">Phone</label> 
-        <input name="phone" value="${phone}" type="phone" />
+        <input name="email" type="email" />
+
+        <label for="phone">Phone</label>
+        <input name="phone" type="phone" />
 
         <div class="controls">
           <button class="cancel">Cancel</button>
           <button class="save">Save</button>
         </div>
-      </form>`;
+      </form>
+    `;
   }
 
-  template({ contacts, count }) {
+  template({ contacts, count, selectedContact }) {
     return /*html*/ `
       <style>${this.style()}</style>
 
@@ -140,7 +210,7 @@ class ContactList extends HTMLElement {
         <button class="new">New Contact</button>
       </div>
 
-      <div class="selected-contact"></div>
+      <div class="selected-contact">${this.form()}</div>
 
       <div class="contacts">
         ${contacts.length ? this.renderContacts(contacts) : ''}
@@ -161,7 +231,7 @@ class ContactList extends HTMLElement {
     $deleteButtons.forEach((button, index) =>
       button.addEventListener('click', (event) => {
         event.stopPropagation();
-        store.dispatch({ type: 'DELETE_CONTACT', index });
+        store.dispatch({ type: actions.DELETE_CONTACT, index });
       })
     );
 
@@ -169,9 +239,42 @@ class ContactList extends HTMLElement {
     $contactsAry.forEach(($contact, index) =>
       $contact.addEventListener('click', (event) => {
         event.stopPropagation();
-        store.dispatch({ type: 'SELECT_CONTACT', index });
+        store.dispatch({ type: actions.SELECT_CONTACT, index });
       })
     );
+  }
+
+  setFirstName(event) {
+    store.dispatch({ type: actions.SET_FIRSTNAME, value: event.target.value });
+  }
+
+  setLastName(event) {
+    store.dispatch({ type: actions.SET_LASTNAME, value: event.target.value });
+  }
+
+  setPhone(event) {
+    store.dispatch({ type: actions.SET_PHONE, value: event.target.value });
+  }
+
+  setEmail(event) {
+    store.dispatch({ type: actions.SET_EMAIL, value: event.target.value });
+  }
+
+  saveContact(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    store.dispatch({ type: 'SAVE_CONTACT' });
+  }
+
+  cancelEdit(event) {
+    console.log(this, event);
+    event.preventDefault();
+    event.stopPropagation();
+    store.dispatch({ type: 'CANCEL_EDIT' });
+  }
+
+  newContact() {
+    store.dispatch({ type: 'CREATE_NEW_CONTACT' });
   }
 
   updateSelectedContact({ selectedContact }) {
@@ -179,76 +282,63 @@ class ContactList extends HTMLElement {
       this.$selectedContact.style.display = 'none';
       return;
     }
-
-    this.$selectedContact.innerHTML = this.form(selectedContact);
     this.$selectedContact.style.display = 'block';
 
-    this.shadowRoot
-      .querySelector('button.save')
-      .addEventListener('click', (event) => {
-        event.preventDefault();
-        store.dispatch({ type: 'SAVE_CONTACT' });
-      });
+    this.$firstNameInput.value = selectedContact.firstName;
+    this.$lastNameInput.value = selectedContact.lastName;
+    this.$emailInput.value = selectedContact.email;
+    this.$phoneInput.value = selectedContact.phone;
+  }
 
-    this.shadowRoot
-      .querySelector('button.cancel')
-      .addEventListener('click', (event) => {
-        event.preventDefault();
-        store.dispatch({ type: 'CANCEL_EDIT' });
-      });
-
-    this.shadowRoot
-      .querySelector('input[name=firstName]')
-      .addEventListener('change', (event) => {
-        event.stopPropagation();
-        store.dispatch({ type: 'SET_FIRSTNAME', value: event.target.value });
-      });
-
-    this.shadowRoot
-      .querySelector('input[name=lastName]')
-      .addEventListener('change', (event) => {
-        event.stopPropagation();
-        store.dispatch({ type: 'SET_LASTNAME', value: event.target.value });
-      });
-
-    this.shadowRoot
-      .querySelector('input[name=phone]')
-      .addEventListener('change', (event) => {
-        event.stopPropagation();
-        store.dispatch({ type: 'SET_PHONE', value: event.target.value });
-      });
-
-    this.shadowRoot
-      .querySelector('input[name=email]')
-      .addEventListener('change', (event) => {
-        event.stopPropagation();
-        store.dispatch({ type: 'SET_EMAIL', value: event.target.value });
-      });
+  queryElements(root) {
+    this.$count = root.querySelector('.count');
+    this.$contacts = root.querySelector('.contacts');
+    this.$newContactButton = root.querySelector('button.new');
+    this.$selectedContact = root.querySelector('.selected-contact');
+    this.$firstNameInput = root.querySelector('input[name=firstName]');
+    this.$lastNameInput = root.querySelector('input[name=lastName]');
+    this.$phoneInput = root.querySelector('input[name=phone]');
+    this.$emailInput = root.querySelector('input[name=email]');
+    this.$saveContactButton = root.querySelector('button.save');
+    this.$cancelEditButton = root.querySelector('button.cancel');
   }
 
   attachEvents(root) {
-    this.$count = root.querySelector('.count');
-    this.$contacts = root.querySelector('.contacts');
-    this.$selectedContact = root.querySelector('.selected-contact');
+    this.$firstNameInput.addEventListener('change', this.setFirstName);
+    this.$lastNameInput.addEventListener('change', this.setLastName);
+    this.$phoneInput.addEventListener('change', this.setPhone);
+    this.$emailInput.addEventListener('change', this.setEmail);
+    this.$saveContactButton.addEventListener('click', this.saveContact);
+    this.$cancelEditButton.addEventListener('click', this.cancelEdit);
 
-    root.querySelector('button.new').addEventListener('click', () => {
-      store.dispatch({ type: 'CREATE_NEW_CONTACT' });
-    });
+    this.$newContactButton.addEventListener('click', this.newContact);
 
     store.subscribe(() => {
       const state = store.getState();
       this.updateCount(state.contacts.length);
       this.updateSelectedContact(state);
       this.updateContacts(state.contacts, store);
-      this.$contactsAry = root.querySelectorAll('.contact');
     });
   }
 
   connectedCallback() {
     this.attachShadow({ mode: 'open' });
     const state = store.getState();
-    this.shadowRoot.innerHTML = this.template(state);
-    this.attachEvents(this.shadowRoot);
+    const root = this.shadowRoot;
+    root.innerHTML = this.template(state);
+    this.queryElements(root);
+    this.attachEvents(root);
+  }
+
+  disconnectedCallback() {
+    this.$firstNameInput.removeEventListener('change', this.setFirstName);
+    this.$lastNameInput.removeEventListener('change', this.setLastName);
+    this.$phoneInput.removeEventListener('change', this.setPhone);
+    this.$emailInput.removeEventListener('change', this.setEmail);
+    this.$saveContactButton.removeEventListener('click', this.saveContact);
+    this.$cancelEditButton.removeEventListener('click', this.cancelEdit);
+
+    this.$newContactButton.removeEventListener('click', this.newContact);
   }
 }
 
