@@ -224,24 +224,51 @@ class ContactList extends HTMLElement {
     this.$count.innerHTML = `Total contacts: ${count}`;
   }
 
-  updateContacts(contacts, store) {
+  deleteContact(event, index) {
+    event.stopPropagation();
+    store.dispatch({ type: actions.DELETE_CONTACT, index });
+  }
+
+  selectContact(event, index) {
+    event.stopPropagation();
+    store.dispatch({ type: actions.SELECT_CONTACT, index });
+  }
+
+  removeOldContactEventListeners() {
+    if (!Reflect.has(this, '$deleteButtons') || !this.$deleteButtons.length) {
+      return;
+    }
+
+    this.$deleteButtons.forEach((button) => {
+      button.removeEventListener('click', (event, index) => {
+        this.deleteContact(event, index);
+      });
+    });
+
+    this.$contactsAry.forEach((button) => {
+      button.removeEventListener('click', (event, index) => {
+        this.deleteContact(event, index);
+      });
+    });
+  }
+
+  updateContacts(contacts) {
+    this.removeOldContactEventListeners();
     this.$contacts.innerHTML = this.renderContacts(contacts);
 
-    const $deleteButtons = this.shadowRoot.querySelectorAll('button.delete');
-    $deleteButtons.forEach((button, index) =>
+    this.$deleteButtons = this.shadowRoot.querySelectorAll('button.delete');
+    this.$deleteButtons.forEach((button, index) => {
       button.addEventListener('click', (event) => {
-        event.stopPropagation();
-        store.dispatch({ type: actions.DELETE_CONTACT, index });
-      })
-    );
+        this.deleteContact(event, index);
+      });
+    });
 
-    const $contactsAry = this.shadowRoot.querySelectorAll('.contact');
-    $contactsAry.forEach(($contact, index) =>
+    this.$contactsAry = this.shadowRoot.querySelectorAll('.contact');
+    this.$contactsAry.forEach(($contact, index) => {
       $contact.addEventListener('click', (event) => {
-        event.stopPropagation();
-        store.dispatch({ type: actions.SELECT_CONTACT, index });
-      })
-    );
+        this.selectContact(event, index);
+      });
+    });
   }
 
   setFirstName(event) {
@@ -267,7 +294,6 @@ class ContactList extends HTMLElement {
   }
 
   cancelEdit(event) {
-    console.log(this, event);
     event.preventDefault();
     event.stopPropagation();
     store.dispatch({ type: 'CANCEL_EDIT' });
@@ -337,8 +363,8 @@ class ContactList extends HTMLElement {
     this.$emailInput.removeEventListener('change', this.setEmail);
     this.$saveContactButton.removeEventListener('click', this.saveContact);
     this.$cancelEditButton.removeEventListener('click', this.cancelEdit);
-
     this.$newContactButton.removeEventListener('click', this.newContact);
+    this.removeContactEventListeners();
   }
 }
 
