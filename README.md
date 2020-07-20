@@ -4,6 +4,8 @@
 
 [Try The Demo Here](https://f1lt3r.github.io/contact-list/)
 
+**Note:** Use the Developer Console to see Redux error messages.
+
 - 🧱 Vanilla [Web Components](https://developer.mozilla.org/en-US/docs/Web/Web_Components) (No Libs/Frameworks)
 - ⚛ [Redux](https://redux.js.org/) Store
 - 🌗 [Darkmode CSS](https://css-tricks.com/dark-modes-with-css/)
